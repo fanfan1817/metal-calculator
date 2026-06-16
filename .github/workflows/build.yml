@@ -1,0 +1,66 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer==1.6.0 cython==0.29.37
+          pip install kivy==2.3.1
+
+      - name: Install Java and SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk wget unzip libtool-bin autoconf autoconf2.69 automake libtool libltdl-dev
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          echo "PATH=$JAVA_HOME/bin:$PATH" >> $GITHUB_ENV
+
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk
+          cd $HOME/.buildozer/android/platform/android-sdk
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip
+          mkdir -p cmdline-tools/latest
+          mv cmdline-tools/bin cmdline-tools/lib cmdline-tools/NOTICE.txt cmdline-tools/source.properties cmdline-tools/latest/ 2>/dev/null || true
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5
+
+      - name: Build with Buildozer
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $ANDROID_HOME/tools/bin
+          ln -sf $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager $ANDROID_HOME/tools/bin/sdkmanager 2>/dev/null || true
+          sudo rm -f /usr/bin/autoheader /usr/bin/automake /usr/bin/aclocal
+          sudo ln -sf /usr/bin/autoheader2.69 /usr/bin/autoheader
+          sudo ln -sf /usr/bin/automake-1.16 /usr/bin/automake
+          sudo ln -sf /usr/bin/aclocal-1.16 /usr/bin/aclocal
+          sudo libtoolize
+          export ACLOCAL=/usr/bin/aclocal
+          export ACLOCAL_FLAGS="-I /usr/share/aclocal -I /usr/share/aclocal-1.16"
+          export LIBTOOLIZE=/usr/bin/libtoolize
+          export PATH=/opt/hostedtoolcache/Python/3.11.15/x64/bin:/usr/bin:$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
+          buildozer android debug 2>&1
+
+      - name: Upload APK
+        if: hashFiles('bin/*.apk') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: metal-calculator.apk
+          path: bin/*.apk

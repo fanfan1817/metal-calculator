@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>金属建材计算器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "微软雅黑", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+    }
+
+    .header {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      text-align: center;
+      padding: 16px 0;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .tabs {
+      display: flex;
+      width: 100%;
+      background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 80px;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+      font-weight: bold;
+    }
+
+    .content {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 16px;
+      display: none;
+    }
+
+    .content.active { display: block; }
+
+    .formula-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .formula-desc {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 16px;
+    }
+
+    .input-group {
+      background: white;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .input-row:last-child { margin-bottom: 0; }
+
+    .input-row label {
+      font-size: 14px;
+      color: #333;
+    }
+
+    .input-row label .unit {
+      font-size: 12px;
+      color: #999;
+      margin-left: 4px;
+    }
+
+    .input-row input {
+      width: 160px;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: right;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .input-row input:focus {
+      border-color: #2563eb;
+    }
+
+    .input-row .opt-label {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .calc-btn {
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .calc-btn:active { background: #1d4ed8; }
+
+    .result-box {
+      background: #f0f9ff;
+      border: 2px solid #2563eb;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .result-box .label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .result-box .value {
+      font-size: 26px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+
+    .result-box .unit {
+      font-size: 14px;
+      color: #888;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">金属建材计算器</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pipe')">圆管</div>
+  <div class="tab" onclick="switchTab('square')">方管</div>
+  <div class="tab" onclick="switchTab('wire')">丝径</div>
+  <div class="tab" onclick="switchTab('flange')">法兰盘</div>
+</div>
+
+<!-- 圆管 -->
+<div class="content active" id="tab-pipe">
+  <div class="formula-title">圆管重量计算</div>
+  <div class="formula-desc">(直径 - 厚度) × 厚度 × 厚度 × 0.02466 × 总米数</div>
+
+  <div class="input-group">
+    <div class="input-row">
+      <label>直径<span class="unit">（毫米）</span></label>
+      <input type="number" id="pipe-d" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>厚度<span class="unit">（毫米）</span></label>
+      <input type="number" id="pipe-t" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>总米数<span class="unit">（米）</span></label>
+      <input type="number" id="pipe-m" inputmode="decimal" placeholder="选填">
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calcPipe()">计算</button>
+
+  <div class="result-box" id="pipe-result">
+    <div class="label">总重量</div>
+    <div class="value"><span id="pipe-val">--</span><span class="unit">kg</span></div>
+  </div>
+</div>
+
+<!-- 方管 -->
+<div class="content" id="tab-square">
+  <div class="formula-title">方管重量计算</div>
+  <div class="formula-desc">((周长 ÷ 3.14) - 厚度) × 厚度 × 0.02466 × 总米数</div>
+
+  <div class="input-group">
+    <div class="input-row">
+      <label>周长<span class="unit">（毫米）</span></label>
+      <input type="number" id="square-p" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>厚度<span class="unit">（毫米）</span></label>
+      <input type="number" id="square-t" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>总米数<span class="unit">（米）</span></label>
+      <input type="number" id="square-m" inputmode="decimal" placeholder="选填">
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calcSquare()">计算</button>
+
+  <div class="result-box" id="square-result">
+    <div class="label">总重量</div>
+    <div class="value"><span id="square-val">--</span><span class="unit">kg</span></div>
+  </div>
+</div>
+
+<!-- 丝径 -->
+<div class="content" id="tab-wire">
+  <div class="formula-title">丝径重量计算</div>
+  <div class="formula-desc">长度 × 丝径 × 丝径 × 0.00617 × 总米数</div>
+
+  <div class="input-group">
+    <div class="input-row">
+      <label>长度<span class="unit">（米）</span></label>
+      <input type="number" id="wire-l" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>丝径<span class="unit">（毫米）</span></label>
+      <input type="number" id="wire-d" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>总米数<span class="unit">（米）</span></label>
+      <input type="number" id="wire-m" inputmode="decimal" placeholder="选填">
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calcWire()">计算</button>
+
+  <div class="result-box" id="wire-result">
+    <div class="label">总重量</div>
+    <div class="value"><span id="wire-val">--</span><span class="unit">kg</span></div>
+  </div>
+</div>
+
+<!-- 法兰盘 -->
+<div class="content" id="tab-flange">
+  <div class="formula-title">法兰盘重量计算</div>
+  <div class="formula-desc">7.85 × 边长1 × 边长2 × 厚度 × 总米数</div>
+
+  <div class="input-group">
+    <div class="input-row">
+      <label>边长1<span class="unit">（米）</span></label>
+      <input type="number" id="flange-a" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>边长2<span class="unit">（米）</span></label>
+      <input type="number" id="flange-b" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>厚度<span class="unit">（毫米）</span></label>
+      <input type="number" id="flange-t" inputmode="decimal" placeholder="0">
+    </div>
+    <div class="input-row">
+      <label>总米数<span class="unit">（米）</span></label>
+      <input type="number" id="flange-m" inputmode="decimal" placeholder="选填">
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calcFlange()">计算</button>
+
+  <div class="result-box" id="flange-result">
+    <div class="label">总重量</div>
+    <div class="value"><span id="flange-val">--</span><span class="unit">kg</span></div>
+  </div>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.tab:nth-child(${['pipe','square','wire','flange'].indexOf(name)+1})`).classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function getVal(id) {
+    const v = document.getElementById(id).value.trim();
+    return v === '' ? null : parseFloat(v);
+  }
+
+  function show(id, val) {
+    document.getElementById(id).textContent = isNaN(val) ? '--' : val.toFixed(4);
+  }
+
+  function calcPipe() {
+    const d = getVal('pipe-d'), t = getVal('pipe-t'), m = getVal('pipe-m');
+    if (d === null || t === null) { alert('请填写直径和厚度'); return; }
+    let r = d - t; r = r * t; r = r * t; r = r * 0.02466;
+    if (m !== null) r = r * m;
+    show('pipe-val', r);
+  }
+
+  function calcSquare() {
+    const p = getVal('square-p'), t = getVal('square-t'), m = getVal('square-m');
+    if (p === null || t === null) { alert('请填写周长和厚度'); return; }
+    let r = p / 3.14; r = r - t; r = r * t; r = r * 0.02466;
+    if (m !== null) r = r * m;
+    show('square-val', r);
+  }
+
+  function calcWire() {
+    const l = getVal('wire-l'), d = getVal('wire-d'), m = getVal('wire-m');
+    if (l === null || d === null) { alert('请填写长度和丝径'); return; }
+    let r = l * d; r = r * d; r = r * 0.00617;
+    if (m !== null) r = r * m;
+    show('wire-val', r);
+  }
+
+  function calcFlange() {
+    const a = getVal('flange-a'), b = getVal('flange-b'), t = getVal('flange-t'), m = getVal('flange-m');
+    if (a === null || b === null || t === null) { alert('请填写边长1、边长2和厚度'); return; }
+    let r = 7.85 * a; r = r * b; r = r * t;
+    if (m !== null) r = r * m;
+    show('flange-val', r);
+  }
+</script>
+
+</body>
+</html>
