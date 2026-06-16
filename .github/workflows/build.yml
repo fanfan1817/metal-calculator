@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -58,9 +61,11 @@ jobs:
           export PATH=/opt/hostedtoolcache/Python/3.11.15/x64/bin:/usr/bin:$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
           buildozer android debug 2>&1
 
-      - name: Upload APK
+      - name: Upload to Release
         if: hashFiles('bin/*.apk') != ''
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
         with:
-          name: metal-calculator.apk
-          path: bin/*.apk
+          files: bin/*.apk
+          body: "金属建材计算器 APK 下载"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
